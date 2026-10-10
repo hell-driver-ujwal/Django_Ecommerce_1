@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'category',
+    'accounts',
 ]
 
 MIDDLEWARE = [
@@ -67,7 +68,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'myProject.wsgi.application'
-
+AUTH_USER_MODEL ='accounts.Account'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
@@ -120,6 +121,9 @@ STATICFILES_DIRS = [
     'myProject/static',
 ]
 
+# media files configurations 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR /'media'
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
