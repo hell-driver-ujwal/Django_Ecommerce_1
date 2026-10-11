@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from .models import Product 
 from category.models import Category
-
+from store.models import Product
 
 # Create your views here.
 def store(request, category_slug=None):
@@ -22,6 +22,12 @@ def store(request, category_slug=None):
     return render(request, 'store/store.html',context)
 
 
+def product_detail(request, category_slug , product_slug):
+    single_product = get_object_or_404(Product, category__slug = category_slug , slug = product_slug)
+    context = {
+        'single_product' : single_product,
+    }
+    return render(request, 'store/product_detail.html', context)
 
 
 #could have used this without the context_processor.py on the category app 
