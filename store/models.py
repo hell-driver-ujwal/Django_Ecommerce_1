@@ -23,8 +23,3 @@ class Product(models.Model):
         if self.stock <= 0:
             self.is_available = False
         super().save(*args, **kwargs)
-
-
-
-    
-
