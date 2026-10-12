@@ -69,6 +69,7 @@ TEMPLATES = [
 
                 #lets see 
                 'category.context_processors.menu_links',
+                'carts.context_processors.cart_counter'
             ],
         },
     },
