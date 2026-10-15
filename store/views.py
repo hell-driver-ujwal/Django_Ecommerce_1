@@ -4,25 +4,35 @@ from category.models import Category
 from store.models import Product
 from carts.models import CartItem , Cart
 from carts.views import _cart_id
-from django.http import HttpResponse
-# Create your views here.
-def store(request, category_slug=None):
-    categories = None
-    products = None
-    if category_slug != None:
-        categories = get_object_or_404(Category, slug = category_slug)
-        products = Product.objects.filter(category = categories, is_available = True)
-        product_count = products.count()
-    else:
-        products = Product.objects.all().filter(is_available=True)
-        product_count = products.count()
- 
-    context = { 
-         'products': products,
-         'product_count':product_count,
-     }
-    return render(request, 'store/store.html',context)
+from django.core.paginator import Paginator
+from django.db.models import Q
 
+
+# Create your views here.
+
+def store(request, category_slug=None):
+
+    products = Product.objects.filter(is_available = True)
+    
+    if category_slug is not  None:
+        categories = get_object_or_404(
+            Category, 
+            slug = category_slug)
+        products = products.filter(categories = categories)
+
+    products = products.order_by(id)
+
+    # for paginator 
+    paginator = Paginator(products,9)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    context = { 
+         'product_count': paginator.count,
+         'page_obj':page_obj,
+         'is_search':False,
+     }   
+    return render(request, 'store/store.html',context)
 
 def product_detail(request, category_slug , product_slug ):
     try:
@@ -36,6 +46,36 @@ def product_detail(request, category_slug , product_slug ):
         'in_cart': in_cart
     }
     return render(request, 'store/product_detail.html', context)
+
+
+# my version of search ,
+def search(request):
+    keyword = request.GET.get('keyword', '').strip()
+    products = Product.objects.none()
+    query = Q()
+
+    if keyword:
+        for word  in keyword.split():
+            query &= (Q(product_name__icontains = word) |
+            Q(description__icontains = word) )
+
+        products = Product.objects.filter(query) 
+    
+    paginator = Paginator(products, 9)
+    page_number = request.GET.get('page')
+
+    page_obj = paginator.get_page(page_number)
+
+    context ={
+             'page_obj': page_obj,
+             'product_count': paginator.count,
+             'keyword': keyword,
+             'is_search' : True 
+        }   
+    
+    return render(request, 'store/store.html', context)
+
+    
 
 
 #could have used this without the context_processor.py on the category app 

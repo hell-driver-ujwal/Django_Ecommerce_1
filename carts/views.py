@@ -13,7 +13,6 @@ def _cart_id(request):
         cart_s = request.session.create()
     return cart_s
 
-
 def add_cart(request, product_id):
     product = get_object_or_404(Product, id = product_id) #get the product 
     try:
@@ -28,7 +27,6 @@ def add_cart(request, product_id):
         if cart_item.quantity < product.stock :
             cart_item.quantity +=1 
             cart_item.save()
-
 
 # for sneaky guys 
     except CartItem.DoesNotExist:
