@@ -14,16 +14,19 @@ def _cart_id(request):
     return cart_s
 
 def add_cart(request, product_id):
+    color = request.GET.get('color')
+    size = request.GET.get('size')
+
     product = get_object_or_404(Product, id = product_id) #get the product 
     try:
-        cart = Cart.objects.get(cart_id= _cart_id(request))
+        carts = Cart.objects.get(cart_id= _cart_id(request))
     except Cart.DoesNotExist:
-        cart = Cart.objects.create(
+        carts = Cart.objects.create(
             cart_id = _cart_id(request)
         )
-    cart.save()
+    carts.save()
     try:
-        cart_item = CartItem.objects.get(product = product, carts = cart)
+        cart_item = CartItem.objects.get(product = product, carts = carts)
         if cart_item.quantity < product.stock :
             cart_item.quantity +=1 
             cart_item.save()

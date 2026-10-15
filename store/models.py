@@ -22,9 +22,23 @@ class Product(models.Model):
     
     def __str__(self):
         return self.product_name
+
+class ProductVariations(models.Model):
+    product = models.ForeignKey(Product, 
+            on_delete=models.CASCADE,
+            related_name= 'variants')
     
-    # my addition
-    # def save(self, *args , **kwargs):
-    #     if self.stock <= 0:
-    #         self.is_available = False
-    #     super().save(*args, **kwargs)
+    color = models.CharField(max_length= 50)
+    size = models.CharField(max_length= 50)
+
+    stock = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                field =['product', 'color', 'size'],
+                name = 'unique_product_color_size'
+            )
+        ]
+
+
