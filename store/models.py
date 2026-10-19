@@ -16,8 +16,7 @@ class Product(models.Model):
     created_date    =models.DateTimeField(auto_now_add= True)
     modified_date   =models.DateTimeField(auto_now= True)
 
-
-    def get_url(self):
+    def get_url(self):  
         return reverse('product_detail', args=[self.category.slug, self.slug])
     
     def __str__(self):
@@ -28,3 +27,26 @@ class Product(models.Model):
     #     if self.stock <= 0:
     #         self.is_available = False
     #     super().save(*args, **kwargs)
+
+variation_category_choice = (
+    ('color','color'),
+    ('size', 'size')
+)
+
+class VariationsManager(models.Manager):
+    def colors(self):
+        return super(VariationsManager, self).filter( variations_category = 'color', is_active = True)
+
+    def sizes(self):
+        return super(VariationsManager, self).filter( variations_category = 'size', is_active = True) 
+
+class Variations(models.Model):
+    product = models.ForeignKey(Product, on_delete= models.CASCADE)
+    variations_category = models.CharField(max_length= 100 , choices= variation_category_choice)
+    variation_value = models.CharField(max_length= 100)
+    is_active = models.BooleanField(default=True)
+    created_date = models.DateTimeField(auto_now= True) 
+    objects = VariationsManager()
+    
+    def __str__(self):
+        return f"{self.product.product_name}-{self.variation_value}" 
