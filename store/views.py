@@ -18,9 +18,9 @@ def store(request, category_slug=None):
         categories = get_object_or_404(
             Category, 
             slug = category_slug)
-        products = products.filter(categories = categories)
+        products = products.filter(category = categories)
 
-    products = products.order_by(id)
+    products = products.order_by('-created_date')
 
     # for paginator 
     paginator = Paginator(products,9)
