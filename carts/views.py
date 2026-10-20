@@ -2,7 +2,8 @@ from decimal import Decimal
 
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
-
+from django.db.models import Sum
+from django.contrib import messages
 from store.models import Product, Variations
 from .models import Cart, CartItem
 
@@ -36,6 +37,22 @@ def add_cart(request, product_id):
         product_variations.append(variation)
 
     cart, _ = Cart.objects.get_or_create(cart_id=_cart_id(request))
+    
+    # Check total quantity of this product already in the cart
+    quantity_in_cart = CartItem.objects.filter(
+        product=product,
+        carts=cart
+    ).aggregate(total=Sum('quantity'))['total'] or 0
+
+    # Check available stock
+    if not product.is_available or quantity_in_cart >= product.stock:
+        messages.error(
+            request,
+            f"Sorry, only {product.stock} units are in stock."
+        )
+        return redirect('cart')
+
+
     cart_items = CartItem.objects.filter(
         product=product,
         carts=cart,
