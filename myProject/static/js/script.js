@@ -44,7 +44,7 @@ $(document).ready(function() {
         }
     });
 
-
+ 
 
 	//////////////////////// Bootstrap tooltip
 	if($('[data-toggle="tooltip"]').length>0) {  // check if element exists
@@ -57,4 +57,6 @@ $(document).ready(function() {
     
 }); 
 // jquery end
-
+setTimeout(function(){
+    $('#message').fadeOut('slow')
+}, 4000)
