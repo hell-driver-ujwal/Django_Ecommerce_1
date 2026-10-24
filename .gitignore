@@ -27,6 +27,8 @@ virtualenv/
 # ==========================================
 # Environment Variables and Secrets
 # ==========================================
+.venv
+.secrets.env 
 .env
 .env.*
 !.env.example
