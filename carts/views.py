@@ -6,6 +6,7 @@ from django.db.models import Sum
 from django.contrib import messages
 from store.models import Product, Variations
 from .models import Cart, CartItem
+from django.contrib.auth.decorators import login_required
 
 
 def _cart_id(request):
@@ -142,3 +143,37 @@ def cart(request):
         "grand_total": grand_total,
     }
     return render(request, "store/cart.html", context)
+
+
+@login_required(login_url= 'login')
+def checkout(request):
+    """Display the current visitor's cart and its totals."""
+
+    total = 0
+    quantity = 0
+    cart_items = CartItem.objects.none()
+
+    current_cart = Cart.objects.filter(cart_id=_cart_id(request)).first()
+    if current_cart is not None:
+        cart_items = (
+            CartItem.objects.filter(carts=current_cart, is_active=True)
+            .select_related("product")
+            .prefetch_related("variations")
+        )
+
+        for item in cart_items:
+            total += item.product.price * item.quantity
+            quantity += item.quantity
+
+    tax = Decimal(total) * Decimal("0.02")
+    grand_total = Decimal(total) + tax
+
+    context = {
+        "total": total,
+        "quantity": quantity,
+        "cart_items": cart_items,
+        "tax": tax,
+        "grand_total": grand_total,
+    }
+     
+    return render(request, "store/checkout.html", context)

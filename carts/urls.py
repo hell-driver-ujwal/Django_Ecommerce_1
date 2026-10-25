@@ -10,4 +10,5 @@ urlpatterns = [
         views.delete_cart_item,
         name="delete_cart_item",
     ),
+    path("checkout/", views.checkout, name = "checkout")
 ]

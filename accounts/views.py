@@ -14,6 +14,10 @@ from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMessage
 
+# Carts 
+from carts.models import Cart, CartItem
+from carts.views import _cart_id
+
 # Create your views here.
 def register(request):
     if request.method == 'POST':
@@ -57,6 +61,16 @@ def login(request):
         user = auth.authenticate(email = email, password = password)
 
         if user is not None:
+            try:
+                print("Entered the try block ")
+                cart = Cart.objects.get(cart_id=_cart_id(request))
+                cart_item = CartItem.objects.filter(carts = cart)
+                for item in cart_item:
+                    item.user = user
+                    item.save()
+            except Exception as e :
+                print("error:",e)
+                
             auth.login(request, user)
             # messages.success(request, "You are now loggend")
             return redirect('dashboard')
@@ -64,6 +78,7 @@ def login(request):
             messages.error(request, "Invalid login credentils ")
             return redirect('login')
     return render(request, 'accounts/login.html')
+
 
 @login_required(login_url = 'login')
 def logout(request):
@@ -88,7 +103,7 @@ def activate(request, uidb64, token):
         return redirect('register')
 
 
-@login_required(login_url = login)
+@login_required(login_url = 'login')
 def dashboard(request):
     return render(request, 'accounts/dashboard.html')
 
