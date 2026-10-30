@@ -17,6 +17,7 @@ from django.core.mail import EmailMessage
 # Carts 
 from carts.models import Cart, CartItem
 from carts.views import _cart_id
+import requests
 
 # Create your views here.
 def register(request):
@@ -62,7 +63,6 @@ def login(request):
 
         if user is not None:
             try:
-                print("Entered the try block ")
                 cart = Cart.objects.get(cart_id=_cart_id(request))
                 cart_item = CartItem.objects.filter(carts = cart)
                 for item in cart_item:
@@ -73,7 +73,15 @@ def login(request):
                 
             auth.login(request, user)
             # messages.success(request, "You are now loggend")
-            return redirect('dashboard')
+            url = request.META.get('HTTP_REFERER')
+            try:
+                query = requests.utils.urlparse(url).query
+                params = dict(x.split('=')for x in query.split('&'))
+                if 'next' in params:
+                    nextpage = params['next']
+                    return redirect(nextpage)
+            except:
+                return redirect('dashboard')
         else:
             messages.error(request, "Invalid login credentils ")
             return redirect('login')
