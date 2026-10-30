@@ -16,14 +16,24 @@ def _cart_id(request):
     return request.session.session_key
 
 
+
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+from django.views.decorators.http import require_POST
+from django.db.models import Sum
+
+from store.models import Product, Variations
+from carts.models import Cart, CartItem
+
+
 @require_POST
 def add_cart(request, product_id):
-    """Add one unit of the selected product/variation combination."""
+
     product = get_object_or_404(Product, id=product_id)
+
+    # 1. Get selected variations
     product_variations = []
 
-    # The product-detail form sends the chosen color and size.
-    # The cart's + button sends the same values in hidden inputs.
     for key, value in request.POST.items():
         if key not in ("color", "size"):
             continue
@@ -35,62 +45,128 @@ def add_cart(request, product_id):
             variation_value__iexact=value.strip(),
             is_active=True,
         )
+
         product_variations.append(variation)
 
-    cart, _ = Cart.objects.get_or_create(cart_id=_cart_id(request))
-    
-    # Check total quantity of this product already in the cart
-    quantity_in_cart = CartItem.objects.filter(
-        product=product,
-        carts=cart
-    ).aggregate(total=Sum('quantity'))['total'] or 0
+    # 2. Identify the user's cart items
+    if request.user.is_authenticated:
 
-    # Check available stock
+        cart_items = CartItem.objects.filter(
+            user=request.user,
+            product=product,
+            is_active=True
+        ).prefetch_related("variations")
+
+    else:
+
+        cart, _ = Cart.objects.get_or_create(
+            cart_id=_cart_id(request)
+        )
+
+        cart_items = CartItem.objects.filter(
+            carts=cart,
+            product=product,
+            is_active=True
+        ).prefetch_related("variations")
+
+    # 3. Calculate quantity already in cart
+    quantity_in_cart = (
+        cart_items.aggregate(total=Sum("quantity"))["total"]
+        or 0
+    )
+
+    # 4. Check stock
     if not product.is_available or quantity_in_cart >= product.stock:
+
         messages.error(
             request,
             f"Sorry, only {product.stock} units are in stock."
         )
-        return redirect('cart')
+        return redirect("cart")
 
+    # 5. Find matching variation combination
+    selected_ids = {
+        variation.id for variation in product_variations
+    }
 
-    cart_items = CartItem.objects.filter(
-        product=product,
-        carts=cart,
-    ).prefetch_related("variations")
-
-    selected_ids = {variation.id for variation in product_variations}
     matching_item = None
 
     for item in cart_items:
-        existing_ids = {variation.id for variation in item.variations.all()}
+
+        existing_ids = {
+            variation.id
+            for variation in item.variations.all()
+        }
+
         if existing_ids == selected_ids:
             matching_item = item
             break
 
+    # 6. Update existing item
     if matching_item is not None:
+
         matching_item.quantity += 1
         matching_item.save(update_fields=["quantity"])
+
+    # 7. Create new item
     else:
-        matching_item = CartItem.objects.create(
-            product=product,
-            carts=cart,
-            quantity=1,
+
+        if request.user.is_authenticated:
+
+            # Reuse a cart associated with user's items,
+            # or create a cart for this session.
+            existing_item = CartItem.objects.filter(
+                user=request.user
+            ).first()
+
+            if existing_item:
+                cart = existing_item.carts
+            else:
+                cart, _ = Cart.objects.get_or_create(
+                    cart_id=_cart_id(request)
+                )
+
+            matching_item = CartItem.objects.create(
+                user=request.user,
+                product=product,
+                carts=cart,
+                quantity=1
+            )
+
+        else:
+
+            matching_item = CartItem.objects.create(
+                product=product,
+                carts=cart,
+                quantity=1
+            )
+
+        matching_item.variations.set(
+            product_variations
         )
-        matching_item.variations.set(product_variations)
 
     return redirect("cart")
+
 
 
 @require_POST
 def remove_cart(request, cart_item_id):
     """Decrease the quantity of one specific cart item."""
-    cart_item = get_object_or_404(
-        CartItem,
-        id=cart_item_id,
-        carts__cart_id=_cart_id(request),
-        is_active=True,
-    )
+    if request.user.is_authenticated:
+        cart_item = get_object_or_404(
+                CartItem,
+                id=cart_item_id,
+                user = request.user,
+                is_active=True,
+            )
+
+    else:
+        cart_item = get_object_or_404(
+            CartItem,
+            id=cart_item_id,
+            carts__cart_id=_cart_id(request),
+            is_active=True,
+        )
 
     if cart_item.quantity > 1:
         cart_item.quantity -= 1
@@ -120,17 +196,24 @@ def cart(request):
     quantity = 0
     cart_items = CartItem.objects.none()
 
-    current_cart = Cart.objects.filter(cart_id=_cart_id(request)).first()
-    if current_cart is not None:
-        cart_items = (
-            CartItem.objects.filter(carts=current_cart, is_active=True)
-            .select_related("product")
-            .prefetch_related("variations")
-        )
+    if request.user.is_authenticated:
+            cart_items = (
+                CartItem.objects.filter(user = request.user, is_active = True)
+                .select_related("product")
+                .prefetch_related("variations")
+            )            
+    else:
+        current_cart = Cart.objects.filter(cart_id=_cart_id(request)).first()
+        if current_cart is not None:
+            cart_items = (
+                CartItem.objects.filter(carts=current_cart, is_active=True)
+                .select_related("product")
+                .prefetch_related("variations")
+            )
 
-        for item in cart_items:
-            total += item.product.price * item.quantity
-            quantity += item.quantity
+    for item in cart_items:
+        total += item.product.price * item.quantity
+        quantity += item.quantity
 
     tax = Decimal(total) * Decimal("0.02")
     grand_total = Decimal(total) + tax
@@ -145,25 +228,26 @@ def cart(request):
     return render(request, "store/cart.html", context)
 
 
-@login_required(login_url= 'login')
+
+@login_required(login_url='login')
 def checkout(request):
-    """Display the current visitor's cart and its totals."""
+    """Display authenticated user's cart and totals."""
 
     total = 0
     quantity = 0
-    cart_items = CartItem.objects.none()
 
-    current_cart = Cart.objects.filter(cart_id=_cart_id(request)).first()
-    if current_cart is not None:
-        cart_items = (
-            CartItem.objects.filter(carts=current_cart, is_active=True)
-            .select_related("product")
-            .prefetch_related("variations")
+    cart_items = (
+        CartItem.objects.filter(
+            user=request.user,
+            is_active=True
         )
+        .select_related("product")
+        .prefetch_related("variations")
+    )
 
-        for item in cart_items:
-            total += item.product.price * item.quantity
-            quantity += item.quantity
+    for item in cart_items:
+        total += item.product.price * item.quantity
+        quantity += item.quantity
 
     tax = Decimal(total) * Decimal("0.02")
     grand_total = Decimal(total) + tax
@@ -175,5 +259,5 @@ def checkout(request):
         "tax": tax,
         "grand_total": grand_total,
     }
-     
+
     return render(request, "store/checkout.html", context)

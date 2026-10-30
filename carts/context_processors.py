@@ -25,8 +25,12 @@ def cart_counter(request):
     cart_count = 0 
     if 'admin' in request.path:
         return {}
-    cart_items = CartItem.objects.filter(carts__cart_id = _cart_id(request))
 
+    if request.user.is_authenticated:
+        cart_items = CartItem.objects.filter(user = request.user)
+    else:
+        cart_items = CartItem.objects.filter(carts__cart_id = _cart_id(request))
+        
     for cart_item in cart_items:
         cart_count+=cart_item.quantity
     return dict(cart_count = cart_count)
