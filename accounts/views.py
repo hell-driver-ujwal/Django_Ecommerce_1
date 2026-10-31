@@ -24,6 +24,7 @@ def register(request):
     if request.method == 'POST':
         form = RegistrationForm(request.POST)
         if form.is_valid():
+            
             first_name = form.cleaned_data['first_name']
             last_name = form.cleaned_data['last_name']
             email = form.cleaned_data['email']
@@ -73,7 +74,7 @@ def login(request):
                 
             auth.login(request, user)
             # messages.success(request, "You are now loggend")
-            url = request.META.get('HTTP_REFERER')
+            url = request.META.get('HTTP_REFERER') 
             try:
                 query = requests.utils.urlparse(url).query
                 params = dict(x.split('=')for x in query.split('&'))
@@ -109,7 +110,6 @@ def activate(request, uidb64, token):
     else:
         messages.error(request, "Invalid activation link")
         return redirect('register')
-
 
 @login_required(login_url = 'login')
 def dashboard(request):

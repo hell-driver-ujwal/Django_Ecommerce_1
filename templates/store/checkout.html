@@ -6,7 +6,7 @@
 <section class="section-content padding-y bg">
   <div class="container">
 
-    <form action="{% url 'home' %}" method="post">
+    <form action="{% url 'place_order' %}" method="post">
       {% csrf_token %}
 
       <div class="row">
@@ -41,7 +41,7 @@
 
                 <div class="col form-group">
                   <label>Phone Number</label>
-                  <input type="text" name="phone"
+                  <input type="text" name="phone_number"
                          class="form-control" required>
                 </div>
               </div>
@@ -63,13 +63,13 @@
               <div class="form-row">
                 <div class="col form-group">
                   <label>Country</label>
-                  <input type="text" name="countr"
+                  <input type="text" name="country"
                          class="form-control" required>
                 </div>
 
                 <div class="col form-group">
-                  <label>Province</label>
-                  <input type="text" name="province"
+                  <label>State</label>
+                  <input type="text" name="state"
                          class="form-control" required>
                 </div>
 
