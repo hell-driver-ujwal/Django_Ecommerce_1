@@ -7,7 +7,7 @@ from django.contrib import messages
 from store.models import Product, Variations
 from .models import Cart, CartItem
 from django.contrib.auth.decorators import login_required
-
+from orders.forms import OrderForm
 
 def _cart_id(request):
     """Return the current visitor's session key, creating it if necessary."""
@@ -252,7 +252,9 @@ def checkout(request):
     tax = Decimal(total) * Decimal("0.02")
     grand_total = Decimal(total) + tax
 
+    form = OrderForm()
     context = {
+        'form':form,
         "total": total,
         "quantity": quantity,
         "cart_items": cart_items,

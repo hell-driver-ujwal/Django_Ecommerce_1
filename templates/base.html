@@ -28,16 +28,16 @@
 <!-- custom javascript -->
 <script src="{% static 'js/script.js' %}" type="text/javascript"></script>
 
-<script type="{% static 'text/javascript' %}">
-/// some script
 
-// jquery ready start
-$(document).ready(function() {
-	// jQuery code
+<!-- PayPal JavaScript SDK (Sandbox) -->
+<script src="https://www.paypal.com/sdk/js?client-id=BAAm-Vg0Eci6QMrHKf39wCM1M-BoyTOM7BypeBrt8AXf7JLk6dsTqSPA_KF1KV2O4WrEVLihJqB3SOBR8c&currency=USD&components=buttons,funding-eligibility&enable-funding=card"></script>
 
-}); 
-// jquery end
+<script type="text/javascript">
+  $(document).ready(function() {
+    // Your custom JavaScript
+  });
 </script>
+
 
 </head>
 
