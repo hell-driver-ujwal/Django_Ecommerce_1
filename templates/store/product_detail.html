@@ -1,124 +1,432 @@
-{% extends 'base.html' %}]
+
+{% extends 'base.html' %}
 {% load static %}
 
-
 {% block content %}
+
+<style>
+  /* Star Rating */
+  .star-rating {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    gap: 5px;
+  }
+
+  .star-rating input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+  }
+
+  .star-rating label {
+    font-size: 32px;
+    color: #ccc;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    margin-bottom: 0;
+  }
+
+  .star-rating label:hover,
+  .star-rating label:hover ~ label,
+  .star-rating input:checked ~ label {
+    color: #ffb400;
+  }
+
+  .star-rating input:focus-visible + label {
+    outline: 2px solid #007bff;
+    outline-offset: 3px;
+  }
+
+  .review-form {
+    border-radius: 8px;
+  }
+</style>
+
 <section class="section-content padding-y bg">
-<div class="container">
+  <div class="container">
 
-<!-- ============================ COMPONENT 1 ================================= -->
-<div class="card">
-	<div class="row no-gutters">
-		<aside class="col-md-6">
-<article class="gallery-wrap"> 
-	<div class="img-big-wrap">
-	   <a href="#"><img src="{{ single_product.images.url }}"></a>
-	</div> <!-- img-big-wrap.// -->
-	
-</article> <!-- gallery-wrap .end// -->
-		</aside>
-		<main class="col-md-6 border-left">
+    <!-- PRODUCT DETAILS -->
+    <div class="card">
+      <div class="row no-gutters">
 
-<form action="{% url 'add_cart' single_product.id %}" method="post">
-	{% csrf_token  %}
-	<article class="content-body">
+        <!-- Product Image -->
+        <aside class="col-md-6">
+          <article class="gallery-wrap">
+            <div class="img-big-wrap">
+              <a href="#">
+                <img src="{{ single_product.images.url }}"
+                     alt="{{ single_product.product_name }}">
+              </a>
+            </div>
+          </article>
+        </aside>
 
-<h2 class="title">{{ single_product.product_name }}</h2>
+        <!-- Product Information -->
+        <main class="col-md-6 border-left">
 
-<div class="mb-3"> 
-	<var class="price h4">${{ single_product.price }}</var> 
-</div> 
+          <form action="{% url 'add_cart' single_product.id %}"
+                method="POST">
+            {% csrf_token %}
 
-<p>{{ single_product.description }}</p>
+            <article class="content-body">
 
-<hr>
-	<div class="row">
-		<div class="item-option-select">
-			<h6>Choose Color</h6>
-			<div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
-			  <select name="color" class="form-control" required>
-    <option value="" disabled selected>Select Color</option>
+              <h2 class="title">
+                {{ single_product.product_name }}
+              </h2>
 
-    {% for i in single_product.variations_set.colors %}
-        <option value="{{ i.variation_value }}">
-            {{ i.variation_value|capfirst }}
-        </option>
-    {% endfor %}
-</select>
-			  
+              <div class="mb-3">
+                <var class="price h4">
+                  ${{ single_product.price }}
+                </var>
+              </div>
 
-			</div> 
-		</div>
-	</div> <!-- row.// -->
-	<div class="row">
-		<div class="item-option-select">
-			<h6>Select Size</h6>
-			<div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
-			  <!-- Size dropdown -->
-<select name="size" class="form-control" required>
-    <option value="" disabled selected>Select Size</option>
+              <p>{{ single_product.description }}</p>
 
-    {% for i in single_product.variations_set.sizes %}
-        <option value="{{ i.variation_value }}">
-            {{ i.variation_value|capfirst }}
-        </option>
-    {% endfor %}
-</select>
-			</div> 
-		</div>
-	</div> <!-- row.// -->
-	<hr>
-{% if single_product.stock <= 0 %}
-        <h5 class ="text-danger" > Out of stock </h5>
-{% else %}
+              <hr>
 
-	<button type = "submit" class="btn  btn-primary"> <span class="text">Add to cart</span> <i class="fas fa-shopping-cart"></i>  </button>
+              <!-- Color Selection -->
+              <div class="row">
+                <div class="item-option-select">
+                  <h6>Choose Color</h6>
 
-{% endif %}
-</article> <!-- product-info-aside .// -->
-</form>
+                  <select name="color"
+                          class="form-control"
+                          required>
+                    <option value="" disabled selected>
+                      Select Color
+                    </option>
+
+                    {% for i in single_product.variations_set.colors %}
+                      <option value="{{ i.variation_value }}">
+                        {{ i.variation_value|capfirst }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+
+              <!-- Size Selection -->
+              <div class="row mt-3">
+                <div class="item-option-select">
+                  <h6>Select Size</h6>
+
+                  <select name="size"
+                          class="form-control"
+                          required>
+                    <option value="" disabled selected>
+                      Select Size
+                    </option>
+
+                    {% for i in single_product.variations_set.sizes %}
+                      <option value="{{ i.variation_value }}">
+                        {{ i.variation_value|capfirst }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+
+              <hr>
+
+              {% if single_product.stock <= 0 %}
+                <h5 class="text-danger">Out of Stock</h5>
+              {% else %}
+                <button type="submit"
+                        class="btn btn-primary">
+                  <span class="text">Add to Cart</span>
+                  <i class="fas fa-shopping-cart"></i>
+                </button>
+              {% endif %}
+
+            </article>
+          </form>
+
+        </main>
+      </div>
+    </div>
+
+    <!-- CUSTOMER REVIEWS SECTION -->
+    <div class="row mt-4">
+      <div class="col-md-9">
+
+        <header class="section-heading">
+          <h3>Customer Reviews</h3>
+        </header>
+
+        <!-- Django messages are shown on this product page -->
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert {% if 'error' in message.tags %}alert-danger{% elif message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %} alert-dismissible fade show" role="alert">
+              {{ message }}
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+          {% endfor %}
+        {% endif %}
+
+        <!-- WRITE REVIEW FORM -->
+        <form action="{% url 'add_review' single_product.id %}" method="POST">
+          {% csrf_token %}
+
+          <div class="card shadow-sm review-form mb-4">
+            <div class="card-body">
+
+              <h5 class="card-title mb-4">
+                Write Your Review
+              </h5>
+
+              <!-- Rating Stars -->
+              <div class="form-group">
+
+                <label class="font-weight-bold d-block">
+                  Your Rating
+                  <span class="text-danger">*</span>
+                </label>
+
+                <div class="star-rating">
+
+                  <input type="radio"
+                         name="raiting"
+                         id="star5"
+                         value="5"
+                         required>
+                  <label for="star5" title="5 stars">★</label>
+
+                  <input type="radio"
+                         name="raiting"
+                         id="star4"
+                         value="4">
+                  <label for="star4" title="4 stars">★</label>
+
+                  <input type="radio"
+                         name="raiting"
+                         id="star3"
+                         value="3">
+                  <label for="star3" title="3 stars">★</label>
+
+                  <input type="radio"
+                         name="raiting"
+                         id="star2"
+                         value="2">
+                  <label for="star2" title="2 stars">★</label>
+
+                  <input type="radio"
+                         name="raiting"
+                         id="star1"
+                         value="1">
+                  <label for="star1" title="1 star">★</label>
+
+                </div>
+
+                <small class="form-text text-muted">
+                  Click on the stars to rate this product.
+                </small>
+
+              </div>
+
+              <!-- Review Title -->
+              <div class="form-group">
+
+                <label for="subject" class="font-weight-bold">
+                  Review Title
+                  <span class="text-danger">*</span>
+                </label>
+
+                <input type="text"
+                       name="subject"
+                       id="subject"
+                       class="form-control"
+                       placeholder="Give your review a title"
+                       maxlength="100"
+                       required>
+
+              </div>
+
+              <!-- Review Text -->
+              <div class="form-group">
+
+                <label for="review" class="font-weight-bold">
+                  Your Review
+                  <span class="text-danger">*</span>
+                </label>
+
+                <textarea name="review"
+                          id="review"
+                          class="form-control"
+                          rows="4"
+                          maxlength="500"
+                          placeholder="Share your experience with this product..."
+                          required></textarea>
+
+                <small class="form-text text-muted">
+                  Maximum 500 characters.
+                </small>
+
+              </div>
+
+              <!-- Submit Button -->
+              <button type="submit"
+                      class="btn btn-primary px-4">
+
+                <i class="fas fa-paper-plane mr-2"></i>
+                Submit Review
+
+              </button>
+
+            </div>
+          </div>
+
+        </form>
 
 
-		</main> <!-- col.// -->
-	</div> <!-- row.// -->
-</div> <!-- card.// -->
-<!-- ============================ COMPONENT 1 END .// ================================= -->
+        <!-- EXISTING CUSTOMER REVIEWS -->
+        {% for customer_review in reviews %}
+          <article class="box mb-3">
+            <div class="icontext w-100">
+              <i class="fas fa-user-circle fa-2x text-muted mr-2" aria-hidden="true"></i>
+              <div class="text">
+                <span class="date text-muted float-md-right">
+                  {{ customer_review.created_at|date:"d M Y" }}
+                </span>
+					<h6 class="mb-1">
+						{{ customer_review.user.first_name }}
+						{{ customer_review.user.last_name }}
 
-<br>
+						{% if customer_review.is_edited %}
+							<small class="text-muted font-weight-normal ml-1">
+								(edited)
+							</small>
+						{% endif %}
+					</h6>
+              </div>
+            </div>
 
-<div class="row">
-			<div class="col-md-9">
+            <!-- Ordinary review display -->
+            <div id="review-display-{{ customer_review.id }}">
+              <div class="text-warning mt-2"
+                   aria-label="Rating: {{ customer_review.raiting }} out of 5">
+                {% for star in "12345" %}
+                  {% if forloop.counter <= customer_review.raiting %}
+                    <i class="fas fa-star"></i>
+                  {% else %}
+                    <i class="far fa-star"></i>
+                  {% endif %}
+                {% endfor %}
+                <small class="text-muted ml-1">{{ customer_review.raiting|floatformat:1 }}/5</small>
+              </div>
 
-	<header class="section-heading">
-		<h3>Customer Reviews </h3>  
-		
-	</header>
+              <div class="mt-3">
+                <h6>{{ customer_review.subject }}</h6>
+                <p>{{ customer_review.review|linebreaksbr }}</p>
+              </div>
 
-	<article class="box mb-3">
-		<div class="icontext w-100">
-			<img src="./images/avatars/avatar1.jpg" class="img-xs icon rounded-circle">
-			<div class="text">
-				<span class="date text-muted float-md-right">24.04.2020 </span>  
-				<h6 class="mb-1">Mike John </h6>
-				
-			</div>
-		</div> <!-- icontext.// -->
-		<div class="mt-3">
-			<p>
-				Dummy comment Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
-				tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
-				quis nostrud exercitation ullamco laboris nisi ut aliquip
-			</p>	
-		</div>
-	</article>
+              {% if request.user.is_authenticated and customer_review.user_id == request.user.id %}
+                <div class="d-flex justify-content-end align-items-center mt-3">
+                  <button type="button"
+                          class="btn btn-outline-primary btn-sm mr-2"
+                          onclick="toggleReviewEdit('{{ customer_review.id }}', true)">
+                    <i class="fas fa-edit mr-1" aria-hidden="true"></i>
+                    Edit Review
+                  </button>
 
-	
+                  <form action="{% url 'remove_review' customer_review.id %}"
+                        method="POST"
+                        onsubmit="return confirm('Are you sure you want to delete this review?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                      <i class="fas fa-trash-alt mr-1" aria-hidden="true"></i>
+                      Delete Review
+                    </button>
+                  </form>
+                </div>
+              {% endif %}
+            </div>
 
-	</div> <!-- col.// -->
-</div> <!-- row.// -->
+            {% if request.user.is_authenticated and customer_review.user_id == request.user.id %}
+              <!-- Hidden until the author clicks Edit Review -->
+              <form id="review-edit-form-{{ customer_review.id }}"
+                    action="{% url 'edit_review' customer_review.id %}"
+                    method="POST"
+                    class="mt-3"
+                    style="display: none;">
+                {% csrf_token %}
 
+                <div class="form-group">
+                  <label class="font-weight-bold d-block">Your Rating</label>
+                  <div class="star-rating">
+                    <input type="radio" name="raiting" id="edit-star5-{{ customer_review.id }}"
+                           value="5" required {% if customer_review.raiting == 5 %}checked{% endif %}>
+                    <label for="edit-star5-{{ customer_review.id }}" title="5 stars">★</label>
 
-</div> <!-- container .//  -->
+                    <input type="radio" name="raiting" id="edit-star4-{{ customer_review.id }}"
+                           value="4" {% if customer_review.raiting == 4 %}checked{% endif %}>
+                    <label for="edit-star4-{{ customer_review.id }}" title="4 stars">★</label>
+
+                    <input type="radio" name="raiting" id="edit-star3-{{ customer_review.id }}"
+                           value="3" {% if customer_review.raiting == 3 %}checked{% endif %}>
+                    <label for="edit-star3-{{ customer_review.id }}" title="3 stars">★</label>
+
+                    <input type="radio" name="raiting" id="edit-star2-{{ customer_review.id }}"
+                           value="2" {% if customer_review.raiting == 2 %}checked{% endif %}>
+                    <label for="edit-star2-{{ customer_review.id }}" title="2 stars">★</label>
+
+                    <input type="radio" name="raiting" id="edit-star1-{{ customer_review.id }}"
+                           value="1" {% if customer_review.raiting == 1 %}checked{% endif %}>
+                    <label for="edit-star1-{{ customer_review.id }}" title="1 star">★</label>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="edit-subject-{{ customer_review.id }}" class="font-weight-bold">Review Title</label>
+                  <input type="text" id="edit-subject-{{ customer_review.id }}" name="subject"
+                         class="form-control" maxlength="100" required
+                         value="{{ customer_review.subject }}">
+                </div>
+
+                <div class="form-group">
+                  <label for="edit-text-{{ customer_review.id }}" class="font-weight-bold">Your Review</label>
+                  <textarea id="edit-text-{{ customer_review.id }}" name="review"
+                            class="form-control" rows="4" maxlength="500"
+                            required>{{ customer_review.review }}</textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-sm mr-2">
+                  <i class="fas fa-save mr-1" aria-hidden="true"></i> Save Changes
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm"
+                        onclick="toggleReviewEdit('{{ customer_review.id }}', false)">
+                  Cancel
+                </button>
+              </form>
+            {% endif %}
+          </article>
+        {% empty %}
+          <p class="text-muted">No reviews yet. Be the first to write one.</p>
+        {% endfor %}
+
+      </div>
+    </div>
+
+  </div>
 </section>
-<!-- ========================= SECTION CONTENT END// ========================= -->
+
+<script>
+  // Switch between read-only review and its pre-filled edit form.
+  function toggleReviewEdit(reviewId, editing) {
+    const display = document.getElementById('review-display-' + reviewId);
+    const form = document.getElementById('review-edit-form-' + reviewId);
+    if (!display || !form) return;
+
+    if (!editing) {
+      form.reset(); // Cancel restores the original title, text, and star selection.
+    }
+
+    display.style.display = editing ? 'none' : 'block';
+    form.style.display = editing ? 'block' : 'none';
+  }
+</script>
+
 {% endblock content %}
