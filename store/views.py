@@ -41,18 +41,17 @@ def store(request, category_slug=None):
 def product_detail(request, category_slug , product_slug ):
     try:
         single_product = Product.objects.get(category__slug = category_slug , slug = product_slug)
-        in_cart = CartItem.objects.filter(carts__cart_id = _cart_id(request), product = single_product).exists()
+       # in_cart = CartItem.objects.filter(carts__cart_id = _cart_id(request), product = single_product).exists()
         reviews = ReviewRatings.objects.filter(product = single_product, status = True).select_related('user').order_by('-created_at')
     except Exception as e:
         raise e 
     
     context = {
         'single_product' : single_product,
-        'in_cart': in_cart,
+        #'in_cart': in_cart,
         'reviews':reviews
     }
     return render(request, 'store/product_detail.html', context)
-
 
 # my version of search ,
 def search(request):
@@ -80,8 +79,6 @@ def search(request):
         }   
     
     return render(request, 'store/store.html', context)
-
-
 
 @require_POST
 @login_required
@@ -145,7 +142,6 @@ def remove_review(request, review_id):
 @require_POST 
 @login_required
 def edit_review(request, review_id):
-
     user = request.user
     review = get_object_or_404(ReviewRatings, user = user, id = review_id)
     produt_url = review.product.get_url()

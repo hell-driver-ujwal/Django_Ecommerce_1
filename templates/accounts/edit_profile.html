@@ -1,0 +1,231 @@
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<section class="section-content padding-y bg">
+    {% include 'includes/alerts.html' %}
+
+    <div class="container">
+        <div class="row">
+
+            {% include 'includes/dashboard_sidebar.html' %}
+
+            <main class="col-md-9">
+                <article class="card">
+
+                    <header class="card-header">
+                        <strong class="d-inline-block mr-3">
+                            Edit Your Profile
+                        </strong>
+                    </header>
+
+                    <div class="card-body">
+
+                        <form action="{% url 'edit_profile' %}"
+                              method="POST"
+                              enctype="multipart/form-data">
+
+                            {% csrf_token %}
+
+                            <!-- Form Errors -->
+                            {{ user_form.non_field_errors }}
+                            {{ profile_form.non_field_errors }}
+
+                            <!-- PROFILE PICTURE DISPLAY AT TOP -->
+                            <div class="text-center mb-4">
+
+                                <div style="
+                                    width: 130px;
+                                    height: 130px;
+                                    margin: 0 auto;
+                                    border-radius: 50%;
+                                    overflow: hidden;
+                                    border: 4px solid #e9ecef;
+                                    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+                                    background-color: #f1f3f5;
+                                ">
+
+                                    {% if profile_form.instance.profile_picture %}
+
+                                        <img
+                                            id="profile-preview"
+                                            src="{{ profile_form.instance.profile_picture.url }}"
+                                            alt="Profile Picture"
+                                            style="
+                                                width: 100%;
+                                                height: 100%;
+                                                object-fit: cover;
+                                            ">
+
+                                    {% else %}
+
+                                        <div id="profile-placeholder"
+                                             style="
+                                                width: 100%;
+                                                height: 100%;
+                                                display: flex;
+                                                align-items: center;
+                                                justify-content: center;
+                                                font-size: 55px;
+                                                color: #adb5bd;
+                                             ">
+                                            &#128100;
+                                        </div>
+
+                                        <img id="profile-preview"
+                                             alt="Profile Picture"
+                                             style="
+                                                width: 100%;
+                                                height: 100%;
+                                                object-fit: cover;
+                                                display: none;
+                                             ">
+
+                                    {% endif %}
+
+                                </div>
+
+                                <h5 class="mt-3 mb-1">
+                                    {{ user.first_name }} {{ user.last_name }}
+                                </h5>
+
+                                <p class="text-muted small">
+                                    {{ user.email }}
+                                </p>
+
+                            </div>
+
+                            <hr class="mb-4">
+
+                            <!-- First Name and Last Name -->
+                            <div class="form-row">
+
+                                <div class="form-group col-md-6">
+                                    <label>First Name</label>
+                                    {{ user_form.first_name }}
+                                    {{ user_form.first_name.errors }}
+                                </div>
+
+                                <div class="form-group col-md-6">
+                                    <label>Last Name</label>
+                                    {{ user_form.last_name }}
+                                    {{ user_form.last_name.errors }}
+                                </div>
+
+                            </div>
+
+                            <!-- Phone Number and Profile Picture Upload -->
+                            <div class="form-row">
+
+                                <div class="form-group col-md-6">
+                                    <label>Phone Number</label>
+                                    {{ user_form.phone_number }}
+                                    {{ user_form.phone_number.errors }}
+                                </div>
+
+                                <div class="form-group col-md-6">
+                                    <label>Profile Picture</label>
+
+                                    {{ profile_form.profile_picture }}
+                                    {{ profile_form.profile_picture.errors }}
+
+                                </div>
+
+                            </div>
+
+                            <!-- Address Line 1 -->
+                            <div class="form-group">
+                                <label>Address Line 1</label>
+                                {{ profile_form.address_line_1 }}
+                                {{ profile_form.address_line_1.errors }}
+                            </div>
+
+                            <!-- Address Line 2 -->
+                            <div class="form-group">
+                                <label>Address Line 2</label>
+                                {{ profile_form.address_line_2 }}
+                                {{ profile_form.address_line_2.errors }}
+                            </div>
+
+                            <!-- City, State and Country -->
+                            <div class="form-row">
+
+                                <div class="form-group col-md-4">
+                                    <label>City</label>
+                                    {{ profile_form.city }}
+                                    {{ profile_form.city.errors }}
+                                </div>
+
+                                <div class="form-group col-md-4">
+                                    <label>State</label>
+                                    {{ profile_form.state }}
+                                    {{ profile_form.state.errors }}
+                                </div>
+
+                                <div class="form-group col-md-4">
+                                    <label>Country</label>
+                                    {{ profile_form.country }}
+                                    {{ profile_form.country.errors }}
+                                </div>
+
+                            </div>
+
+                            <!-- Save Changes -->
+                            <div class="form-group mt-3">
+                                <button type="submit"
+                                        class="btn btn-primary btn-block">
+                                    Save Changes
+                                </button>
+                            </div>
+
+                        </form>
+
+                    </div>
+
+                </article>
+            </main>
+
+        </div>
+    </div>
+
+</section>
+
+<!-- LIVE PROFILE PICTURE PREVIEW -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+
+    const fileInput = document.querySelector(
+        'input[name="profile_picture"]'
+    );
+
+    const preview = document.getElementById("profile-preview");
+    const placeholder = document.getElementById("profile-placeholder");
+
+    if (fileInput && preview) {
+        fileInput.addEventListener("change", function() {
+
+            const file = this.files[0];
+
+            if (file && file.type.startsWith("image/")) {
+
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = "block";
+
+                    if (placeholder) {
+                        placeholder.style.display = "none";
+                    }
+                };
+
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+});
+</script>
+
+{% endblock content %}
