@@ -1,0 +1,328 @@
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<section class="section-content padding-y bg">
+    {% include 'includes/alerts.html' %}
+
+    <div class="container">
+        <div class="row">
+
+            {% include 'includes/dashboard_sidebar.html' %}
+
+            <main class="col-md-9">
+
+                <article class="card">
+
+                    <!-- HEADER -->
+                    <header class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+
+                            <div>
+                                <strong>Order Details</strong>
+                                <p class="text-muted mb-0">
+                                    Order #{{ order.order_number }}
+                                </p>
+                            </div>
+
+                            <div>
+                                {% if order.status == 'Completed' %}
+                                    <span class="badge badge-success">
+                                        {{ order.status }}
+                                    </span>
+                                {% elif order.status == 'Cancelled' %}
+                                    <span class="badge badge-danger">
+                                        {{ order.status }}
+                                    </span>
+                                {% elif order.status == 'Accepted' %}
+                                    <span class="badge badge-info">
+                                        {{ order.status }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge badge-warning">
+                                        {{ order.status }}
+                                    </span>
+                                {% endif %}
+                            </div>
+
+                        </div>
+                    </header>
+
+                    <div class="card-body">
+
+                        <!-- ORDER INFORMATION -->
+                        <div class="row mb-4">
+
+                            <div class="col-md-6">
+                                <h6>Order Information</h6>
+                                <hr>
+
+                                <p class="mb-1">
+                                    <strong>Order Number:</strong>
+                                    {{ order.order_number }}
+                                </p>
+
+                                <p class="mb-1">
+                                    <strong>Order Date:</strong>
+                                    {{ order.created_yet|date:"d M Y, h:i A" }}
+                                </p>
+
+                                <p class="mb-1">
+                                    <strong>Order Status:</strong>
+                                    {{ order.status }}
+                                </p>
+
+                                <p class="mb-1">
+                                    <strong>Total Items:</strong>
+                                    {{ total_quantity }}
+                                </p>
+
+                            </div>
+
+                            <!-- PAYMENT INFORMATION -->
+                            <div class="col-md-6">
+                                <h6>Payment Information</h6>
+                                <hr>
+
+                                {% if order.payment %}
+
+                                    <p class="mb-1">
+                                        <strong>Payment Method:</strong>
+                                        {{ order.payment.payment_method }}
+                                    </p>
+
+                                    <p class="mb-1">
+                                        <strong>Transaction ID:</strong>
+                                        {{ order.payment.payment_id }}
+                                    </p>
+
+                                    <p class="mb-1">
+                                        <strong>Payment Status:</strong>
+                                        {{ order.payment.status }}
+                                    </p>
+
+                                    <p class="mb-1">
+                                        <strong>Amount Paid:</strong>
+                                        ${{ order.payment.amount_paid|floatformat:2 }}
+                                    </p>
+
+                                {% else %}
+
+                                    <p class="text-muted">
+                                        No payment information available.
+                                    </p>
+
+                                {% endif %}
+
+                            </div>
+
+                        </div>
+
+                        <!-- SHIPPING INFORMATION -->
+                        <div class="mb-4">
+
+                            <h6>Shipping Address</h6>
+                            <hr>
+
+                            <p class="mb-1">
+                                <strong>{{ order.full_name }}</strong>
+                            </p>
+
+                            <p class="mb-1">
+                                {{ order.full_address }}
+                            </p>
+
+                            <p class="mb-1">
+                                {{ order.city }},
+                                {{ order.state }},
+                                {{ order.country }}
+                            </p>
+
+                            <p class="mb-1">
+                                <strong>Email:</strong>
+                                {{ order.email }}
+                            </p>
+
+                            <p class="mb-1">
+                                <strong>Phone:</strong>
+                                {{ order.phone_number }}
+                            </p>
+
+                        </div>
+
+                        <!-- ORDER NOTES -->
+                        {% if order.order_note %}
+
+                            <div class="mb-4">
+                                <h6>Order Notes</h6>
+                                <hr>
+
+                                <p>{{ order.order_note }}</p>
+                            </div>
+
+                        {% endif %}
+
+                        <!-- ORDER PRODUCTS -->
+                        <div class="mb-4">
+
+                            <h6>Ordered Products</h6>
+                            <hr>
+
+                            <div class="table-responsive">
+
+                                <table class="table table-bordered table-hover">
+
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Product</th>
+                                            <th>Price</th>
+                                            <th>Quantity</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+
+                                        {% for item in order_items %}
+
+                                            <tr>
+
+                                                <!-- PRODUCT -->
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+
+                                                        {% if item.product.images %}
+
+                                                            <img
+                                                                src="{{ item.product.images.url }}"
+                                                                alt="{{ item.product.product_name }}"
+                                                                width="65"
+                                                                height="65"
+                                                                class="rounded mr-3"
+                                                                style="object-fit: cover;">
+
+                                                        {% endif %}
+
+                                                        <div>
+
+                                                            <a href="{{ item.product.get_url }}">
+                                                                <strong>
+                                                                    {{ item.product.product_name }}
+                                                                </strong>
+                                                            </a>
+
+                                                            <!-- VARIATIONS -->
+                                                            {% for variation in item.variation.all %}
+
+                                                                <div class="small text-muted">
+                                                                    {{ variation.variations_category|title }}:
+                                                                    {{ variation.variation_value }}
+                                                                </div>
+
+                                                            {% endfor %}
+
+                                                        </div>
+
+                                                    </div>
+                                                </td>
+
+                                                <!-- PRICE -->
+                                                <td>
+                                                    ${{ item.product_price|floatformat:2 }}
+                                                </td>
+
+                                                <!-- QUANTITY -->
+                                                <td>
+                                                    {{ item.quantity }}
+                                                </td>
+
+                                                <!-- TOTAL -->
+                                                <td>
+                                                    ${{ item.line_total|floatformat:2 }}
+                                                </td>
+
+                                            </tr>
+
+                                        {% empty %}
+
+                                            <tr>
+                                                <td colspan="4" class="text-center">
+                                                    No products found.
+                                                </td>
+                                            </tr>
+
+                                        {% endfor %}
+
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+
+                        </div>
+
+                        <!-- ORDER SUMMARY -->
+                        <div class="row">
+
+                            <div class="col-md-6"></div>
+
+                            <div class="col-md-6">
+
+                                <table class="table table-borderless">
+
+                                    <tr>
+                                        <td>Subtotal</td>
+                                        <td class="text-right">
+                                            ${{ subtotal|floatformat:2 }}
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>Tax</td>
+                                        <td class="text-right">
+                                            ${{ order.tax|floatformat:2 }}
+                                        </td>
+                                    </tr>
+
+                                    <tr class="border-top">
+                                        <td>
+                                            <strong>Grand Total</strong>
+                                        </td>
+
+                                        <td class="text-right">
+                                            <strong>
+                                                ${{ order.order_total|floatformat:2 }}
+                                            </strong>
+                                        </td>
+                                    </tr>
+
+                                </table>
+
+                            </div>
+
+                        </div>
+
+                        <!-- BACK BUTTON -->
+                        <div class="mt-3">
+
+                            <a href="{% url 'my_orders' %}"
+                               class="btn btn-outline-primary">
+                                Back to My Orders
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </article>
+
+            </main>
+
+        </div>
+    </div>
+
+</section>
+
+{% endblock content %}

@@ -23,7 +23,7 @@
 								Total Orders
 							</h5>
 							<h4>{{ orders_count }}</h4>
-							<a href="">View Orders </a>
+							<a href="{% url 'my_orders' %}">View Orders </a>
 						</div>
 					</div>
 				</div>
@@ -31,9 +31,24 @@
 				<div class="col-md-6">
 					<div class="card">
 						<div class="card-body" style ="text-align: center;" >
-							<img src="" alt="User Profile Picture" width="50", height="50", style = "border-radius:50">
-							<p class = "mb-0">{{user.email}}</p>
+
+							{% if user.userprofile.profile_picture %}
+								<img src="{{ user.userprofile.profile_picture.url }}"
+									alt="User Profile Picture"
+									width="50"
+									height="50"
+									style="border-radius: 50%; object-fit: cover;">
+							{% else %}
+								<img src="{% static 'images/default-avatar.png' %}"
+									alt="Default Profile Picture"
+									width="50"
+									height="50"
+									style="border-radius: 50%; object-fit: cover;">
+							{% endif %}
+
+							<p class="mb-0">{{ user.email }}</p>
 							<p>{{ user.phone_number }}</p>
+
 						</div>
 					</div>
 				</div>

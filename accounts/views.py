@@ -20,12 +20,13 @@ from carts.views import _cart_id
 import requests
 
 # orders
-from orders.models import Order
+from orders.models import Order, OrderProduct
 
 
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from django.shortcuts import get_object_or_404
 
 # Create your views here.
 def register(request):
@@ -269,5 +270,33 @@ def change_password(request):
         
     return render(request,'accounts/change_password.html')
 
-def order_detial(request, order_id):
-    pass 
+
+@login_required(login_url='login')
+def order_detail(request, order_number):
+
+    order = get_object_or_404(
+        Order,
+        order_number=order_number,
+        user=request.user
+    )
+
+    order_items = OrderProduct.objects.filter(
+        order=order
+    ).select_related('product').prefetch_related('variation')
+
+    subtotal = 0
+    total_quantity = 0
+
+    for item in order_items:
+        item.line_total = item.product_price * item.quantity
+        subtotal += item.line_total
+        total_quantity += item.quantity
+
+    context = {
+        'order': order,
+        'order_items': order_items,
+        'subtotal': subtotal,
+        'total_quantity': total_quantity,
+    }
+
+    return render(request, 'orders/order_detail.html', context)
