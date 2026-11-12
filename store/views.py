@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Product 
+from .models import Product , ProductGallery
 from category.models import Category
 from store.models import Product
 from carts.models import CartItem , Cart
@@ -43,13 +43,15 @@ def product_detail(request, category_slug , product_slug ):
         single_product = Product.objects.get(category__slug = category_slug , slug = product_slug)
        # in_cart = CartItem.objects.filter(carts__cart_id = _cart_id(request), product = single_product).exists()
         reviews = ReviewRatings.objects.filter(product = single_product, status = True).select_related('user').order_by('-created_at')
+        product_image = ProductGallery.objects.filter(product = single_product).select_related('product')
     except Exception as e:
         raise e 
     
     context = {
         'single_product' : single_product,
         #'in_cart': in_cart,
-        'reviews':reviews
+        'reviews':reviews,
+        'product_image':product_image
     }
     return render(request, 'store/product_detail.html', context)
 

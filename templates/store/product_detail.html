@@ -42,6 +42,110 @@
   .review-form {
     border-radius: 8px;
   }
+
+  /* Product image gallery */
+  .product-gallery {
+    padding: 22px;
+  }
+
+  .product-gallery-main {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 320px;
+    aspect-ratio: 1 / 1;
+    background: #f8f9fb;
+    border: 1px solid #edf0f3;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .product-gallery-main-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    padding: 18px;
+  }
+
+  .product-gallery-main img {
+    display: block;
+    max-width: 100%;
+    max-height: 430px;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .product-gallery-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid #dce1e6;
+    background: rgba(255, 255, 255, 0.94);
+    color: #343a40;
+    font-size: 25px;
+    line-height: 1;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
+    cursor: pointer;
+  }
+
+  .product-gallery-nav:hover,
+  .product-gallery-nav:focus-visible {
+    background: #e9f2ff;
+    border-color: #007bff;
+  }
+
+  .product-gallery-prev { left: 12px; }
+  .product-gallery-next { right: 12px; }
+
+  .product-gallery-thumbnails {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 12px 2px 5px;
+    scrollbar-width: thin;
+  }
+
+  .product-gallery-thumb {
+    flex: 0 0 76px;
+    width: 76px;
+    height: 76px;
+    padding: 4px;
+    background: #fff;
+    border: 2px solid #e5e8eb;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+
+  .product-gallery-thumb img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 5px;
+  }
+
+  .product-gallery-thumb:hover,
+  .product-gallery-thumb:focus-visible,
+  .product-gallery-thumb.is-active {
+    border-color: #007bff;
+    box-shadow: 0 0 0 1px rgba(0, 123, 255, .16);
+  }
+
+  @media (max-width: 767.98px) {
+    .product-gallery { padding: 14px; }
+    .product-gallery-main { min-height: 260px; }
+    .product-gallery-thumb { flex-basis: 64px; width: 64px; height: 64px; }
+  }
 </style>
 
 <section class="section-content padding-y bg">
@@ -51,16 +155,70 @@
     <div class="card">
       <div class="row no-gutters">
 
-        <!-- Product Image -->
+        <!-- PRODUCT GALLERY: main product image + gallery thumbnails -->
         <aside class="col-md-6">
-          <article class="gallery-wrap">
-            <div class="img-big-wrap">
-              <a href="#">
-                <img src="{{ single_product.images.url }}"
-                     alt="{{ single_product.product_name }}">
+          <div class="product-gallery" id="productGallery">
+
+            <div class="product-gallery-main">
+              <!-- Click the main image to open the full-size photo -->
+              <a id="productGalleryImageLink"
+                 class="product-gallery-main-link"
+                 href="{{ single_product.images.url }}"
+                 target="_blank"
+                 rel="noopener"
+                 title="Open full-size image">
+                <img id="productGalleryMainImage"
+                     src="{{ single_product.images.url }}"
+                     alt="{{ single_product.product_name }}"
+                     loading="eager">
               </a>
+
+              {% if product_image %}
+                <button type="button"
+                        class="product-gallery-nav product-gallery-prev"
+                        id="productGalleryPrevious"
+                        aria-label="Previous product image">&#8249;</button>
+                <button type="button"
+                        class="product-gallery-nav product-gallery-next"
+                        id="productGalleryNext"
+                        aria-label="Next product image">&#8250;</button>
+              {% endif %}
             </div>
-          </article>
+
+            <!-- The main Product image is the first thumbnail -->
+            <div class="product-gallery-thumbnails" role="group" aria-label="Product image thumbnails">
+              <button type="button"
+                      class="product-gallery-thumb is-active"
+                      data-image-src="{{ single_product.images.url }}"
+                      data-image-alt="{{ single_product.product_name }}"
+                      aria-label="View main product image"
+                      aria-pressed="true">
+                <img src="{{ single_product.images.url }}"
+                     alt="Main product image"
+                     loading="lazy">
+              </button>
+
+              <!-- Additional ProductGallery images from product_image context -->
+              {% for gallery_image in product_image %}
+                {% if gallery_image.image %}
+                  <button type="button"
+                          class="product-gallery-thumb"
+                          data-image-src="{{ gallery_image.image.url }}"
+                          data-image-alt="{{ gallery_image.image_description|default:gallery_image.image_name }}"
+                          aria-label="View {{ gallery_image.image_name|default:'additional product image' }}"
+                          aria-pressed="false">
+                    <img src="{{ gallery_image.image.url }}"
+                         alt="{{ gallery_image.image_description|default:gallery_image.image_name }}"
+                         loading="lazy">
+                  </button>
+                {% endif %}
+              {% endfor %}
+            </div>
+
+            <p class="small text-muted mb-0 mt-2 text-center">
+              Select a thumbnail to see another view. Click the large image to enlarge it.
+            </p>
+          </div>
         </aside>
 
         <!-- Product Information -->
@@ -425,6 +583,51 @@
 
   </div>
 </section>
+
+<script>
+  // Product gallery: switch the large photo without reloading the page.
+  (function () {
+    const gallery = document.getElementById('productGallery');
+    if (!gallery) return;
+
+    const mainImage = document.getElementById('productGalleryMainImage');
+    const fullImageLink = document.getElementById('productGalleryImageLink');
+    const thumbnails = Array.from(gallery.querySelectorAll('.product-gallery-thumb'));
+    const previous = document.getElementById('productGalleryPrevious');
+    const next = document.getElementById('productGalleryNext');
+    let activeIndex = 0;
+
+    function showImage(index) {
+      if (!thumbnails.length) return;
+      activeIndex = (index + thumbnails.length) % thumbnails.length;
+      const selected = thumbnails[activeIndex];
+      const imageSrc = selected.dataset.imageSrc;
+
+      mainImage.src = imageSrc;
+      mainImage.alt = selected.dataset.imageAlt || 'Product image';
+      fullImageLink.href = imageSrc;
+
+      thumbnails.forEach((button, i) => {
+        const active = i === activeIndex;
+        button.classList.toggle('is-active', active);
+        button.setAttribute('aria-pressed', String(active));
+      });
+
+      selected.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
+
+    thumbnails.forEach((button, index) => {
+      button.addEventListener('click', () => showImage(index));
+    });
+
+    if (previous) {
+      previous.addEventListener('click', () => showImage(activeIndex - 1));
+    }
+    if (next) {
+      next.addEventListener('click', () => showImage(activeIndex + 1));
+    }
+  })();
+</script>
 
 <script>
   // Switch between read-only review and its pre-filled edit form.

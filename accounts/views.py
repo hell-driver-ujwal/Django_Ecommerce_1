@@ -88,6 +88,7 @@ def login(request):
                 print("error:",e)
                 
             auth.login(request, user)
+            
             # messages.success(request, "You are now loggend")
             url = request.META.get('HTTP_REFERER') 
             try:
